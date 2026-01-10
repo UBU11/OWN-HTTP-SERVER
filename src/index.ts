@@ -1,7 +1,7 @@
 import * as net from "net";
-import { newConn } from "./utils/New-connection.ts";
+import { newConn } from "./utils/New-Conn.ts";
 
-let server = net.createServer({allowHalfOpen:true});
+let server = net.createServer({ allowHalfOpen: true, pauseOnConnect: true   });
 
 server.on("connection", newConn);
 

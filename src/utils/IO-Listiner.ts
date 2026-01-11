@@ -1,26 +1,23 @@
-import { Socket } from "dgram";
 import * as net from "net";
-import { listen } from "node:quic";
+import type { TCPConn } from "./IO-Conn";
 
 type TCPListner = {
-  socket: net.Socket;
-
-  listner: null | {
-    resolve: (value: Buffer) => void;
-    reject: (value: Error) => void;
+  listner: net.Server;
+  host: {
+    port: number;
+    address: string;
   };
+  close: () => void;
 
-  err: Error | null;
-
-  ended: boolean;
+  error: Error | null
 };
 
-function soListen(socket: net.Socket): TCPListner {
+function soListen(listen: net.Server): TCPListner {
   const lister: TCPListner = {
-    ended: true,
-    err: null,
-    listner: null,
-    socket: socket,
+    
+    error: null,
+    listner: listen,
+
   };
 
   socket.on("data", (data: Buffer) => {
@@ -28,4 +25,8 @@ function soListen(socket: net.Socket): TCPListner {
   });
 
   return lister;
+}
+
+function soAccept(): Promise<TCPConn> {
+  return new Promise((resolve, reject) => {});
 }

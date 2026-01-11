@@ -99,3 +99,5 @@ export default async function serverClient(socket: net.Socket) {
 
 
 
+
+export {TCPConn}

@@ -4,45 +4,98 @@ type TCPConn = {
   socket: net.Socket;
 
   reader: null | {
-    resolve: (value: Buffer) => void,
-    reject: (reason: Error) => void
+    resolve: (value: Buffer) => void;
+    reject: (reason: Error) => void;
   };
+
+  err: null | Error;
+
+  ended: boolean;
 };
 
-
-function initConn(socket: net.Socket):TCPConn{
-
-  const conn : TCPConn = {
+function initConn(socket: net.Socket): TCPConn {
+  const conn: TCPConn = {
     socket: socket,
-    reader:null
-  }
+    reader: null,
+    err: null,
+    ended: false,
+  };
 
-  socket.on('data', (data:Buffer)=>{
+  socket.on("data", (data: Buffer) => {
+    console.log("TCP connection initilizing", conn.reader);
 
-    console.log("TCP connection initilizing",conn.reader);
+    conn.socket.pause();
 
-    conn.socket.pause()
+    conn.reader!.resolve(data);
+    conn.reader = null;
+  });
 
-    conn.reader!.resolve(data)
-    conn.reader = null
-  })
+  socket.on("end", (err: Error) => {
+    conn.ended = true;
+    if (conn.reader) {
+      conn.reader.reject(err);
+      conn.reader = null;
+    }
+  });
 
   return conn;
 }
 
 function readConn(conn: TCPConn): Promise<Buffer> {
+  console.assert(!conn.reader);
 
-console.assert(!conn.reader)
+  return new Promise((resolve, reject) => {
+    if (conn.err) {
+      reject(conn.err);
+      return;
+    }
 
-return new Promise((resolve, reject)=>{
+    if (conn.ended) {
+      resolve(Buffer.from(""));
+      return;
+    }
 
-  conn.reader = {resolve: resolve , reject: reject}
+    conn.reader = { resolve: resolve, reject: reject };
 
-  conn.socket.resume()
-})
-
-};
+    conn.socket.resume();
+  });
+}
 function writeConn(conn: TCPConn, data: Buffer): Promise<void> {
+  console.assert(data.length > 0);
+
+  return new Promise((resolve, reject) => {
+    if (conn.err) {
+      reject(conn.err);
+      return;
+    }
+
+    conn.socket.write(data, (err?: Error | null) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+export default async function serverClient(socket: net.Socket) {
+  const conn: TCPConn = initConn(socket);
+
+  while (true) {
+    const data = await readConn(conn);
+
+    if (data.length === 0) {
+      console.log("end connection");
+
+      break;
+    }
+    console.log("data", data);
+    writeConn(conn, data);
+  }
+}
 
 
-};
+
+
+

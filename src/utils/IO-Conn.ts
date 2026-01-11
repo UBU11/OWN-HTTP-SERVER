@@ -2,14 +2,11 @@ import * as net from "net";
 
 type TCPConn = {
   socket: net.Socket;
-
   reader: null | {
     resolve: (value: Buffer) => void;
     reject: (reason: Error) => void;
   };
-
   err: null | Error;
-
   ended: boolean;
 };
 

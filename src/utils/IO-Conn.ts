@@ -1,6 +1,6 @@
 import * as net from "net";
 
-type TCPConn = {
+export type TCPConn = {
   socket: net.Socket;
   reader: null | {
     resolve: (value: Buffer) => void;
@@ -92,9 +92,4 @@ export default async function serverClient(socket: net.Socket) {
   }
 }
 
-
-
-
-
-
-export {TCPConn}
+export { initConn, writeConn, readConn };
